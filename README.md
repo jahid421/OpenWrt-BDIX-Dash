@@ -1,0 +1,1 @@
+# OpenWrt-BDIX-Bypass-By-Jahid-Hasan-Shuvo
