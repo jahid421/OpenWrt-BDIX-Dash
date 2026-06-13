@@ -27,3 +27,22 @@ wget -O- https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Bypass-By-Jahid
 
 Instagram: @crazy_boy_jahid
 আপনার যদি এই টুলটি ভালো লেগে থাকে, তবে GitHub রিপোজিটরিতে একটি ⭐ দিতে ভুলবেন না!
+
+
+
+🗑 Uninstall (কিভাবে ডিলিট করবেন)
+যদি আপনি কোনো কারণে BDIX BYPASS সিস্টেমটি আপনার রাউটার থেকে পুরোপুরি সরিয়ে ফেলতে চান, তবে নিচের কমান্ডটি SSH টার্মিনালে রান করুন:
+
+```bash
+wget -O- https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Bypass-By-Jahid-Hasan-Shuvo/refs/heads/main/uninstall.sh  | sh
+```
+
+এই আনইনস্টল স্ক্রিপ্টটি যা যা করবে:
+
+Service Cleanup: চলমান প্রক্সি সার্ভিসটি (redsocks) সাথে সাথে স্টপ এবং ডিজেবল করে দিবে।
+
+Remove Files: রাউটারে থাকা সব সার্ভিস ফাইল, কনফিগ এবং LuCI-এর UI ফাইলগুলো মুছে ফেলবে।
+
+Menu Cleanup: মেনু থেকে BDIX_BYPASS অপশনটি সরিয়ে দিবে।
+
+Cache Reset: সিস্টেম ক্যাশ ক্লিয়ার করে সবকিছু আগের মতো ক্লিন করে দিবে।
