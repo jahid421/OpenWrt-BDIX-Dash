@@ -14,7 +14,7 @@
 আপনার রাউটারে **SSH** দিয়ে লগইন করুন এবং নিচের কমান্ডটি কপি করে পেস্ট করুন:
 
 ```bash
-wget -O- https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Bypass-By-Jahid-Hasan-Shuvo/refs/heads/main/install.sh | sh
+opkg update && opkg install wget coreutils-nohup && wget -qO /tmp/install.sh https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Bypass-By-Jahid-Hasan-Shuvo/main/install.sh && sed -i 's/\r$//' /tmp/install.sh && sh /tmp/install.sh && rm /tmp/install.sh
 ```
 
 ## (দ্রষ্টব্য: কমান্ডটি চালানোর পর টার্মিনালে ইন্সটলেশন শেষ হওয়া পর্যন্ত অপেক্ষা করুন এবং শেষে আপনার ব্রাউজারে LuCI রিফ্রেশ দিন।)
@@ -34,7 +34,7 @@ Instagram: @crazy_boy_jahid
 যদি আপনি কোনো কারণে BDIX BYPASS সিস্টেমটি আপনার রাউটার থেকে পুরোপুরি সরিয়ে ফেলতে চান, তবে নিচের কমান্ডটি SSH টার্মিনালে রান করুন:
 
 ```bash
-wget -O- https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Bypass-By-Jahid-Hasan-Shuvo/refs/heads/main/uninstall.sh | sh
+wget -qO /tmp/uninstall.sh https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Bypass-By-Jahid-Hasan-Shuvo/refs/heads/main/uninstall.sh && sed -i 's/\r$//' /tmp/uninstall.sh && sh /tmp/uninstall.sh && rm /tmp/uninstall.sh
 ```
 
 ## এই আনইনস্টল স্ক্রিপ্টটি যা যা করবে:
