@@ -48,12 +48,7 @@ wget -qO /tmp/uninstall.sh https://raw.githubusercontent.com/jahid421/OpenWrt-BD
 Service Cleanup: চলমান প্রক্সি সার্ভিসটি (redsocks) সাথে সাথে স্টপ এবং ডিজেবল করে দিবে।
 Remove Files: রাউটারে থাকা সব সার্ভিস ফাইল, কনফিগ এবং LuCI-এর UI ফাইলগুলো মুছে ফেলবে।
 Menu Cleanup: মেনু থেকে BDIX_BYPASS অপশনটি সরিয়ে দিবে।
-
+Cache Reset: সিস্টেম ক্যাশ ক্লিয়ার করে সবকিছু আগের মতো ক্লিন করে দিবে।
 
 ## Keywords
 OpenWrt BDIX Bypass, BDIX Routing for OpenWrt, LuCI BDIX Dashboard, Jahid Hasan Shuvo, BDIX Speed Optimization, OpenWrt Network Tools.
-
-
-
-
-Cache Reset: সিস্টেম ক্যাশ ক্লিয়ার করে সবকিছু আগের মতো ক্লিন করে দিবে।
