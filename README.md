@@ -28,7 +28,7 @@ opkg update && opkg install wget coreutils-nohup && wget -qO /tmp/install.sh htt
 ## For opnewrt 25.12 and Update version Users
 
 ```bash
-apk update && apk add wget coreutils-nohup && wget -qO /tmp/install.sh https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Dash/refs/heads/main/install.sh && sed -i 's/\r$//' /tmp/install.sh && sh /tmp/install.sh && rm /tmp/install.sh
+apk update || true && apk add wget-ssl sed --allow-untrusted && wget --no-check-certificate -qO /tmp/install.sh https://raw.githubusercontent.com/jahid421/OpenWrt-BDIX-Dash/main/install.sh && sed -i 's/\r$//; s/opkg update/:/g; s/opkg install/apk add --allow-untrusted/g' /tmp/install.sh && sh /tmp/install.sh && rm /tmp/install.sh
 ```
 
 ## (দ্রষ্টব্য: কমান্ডটি চালানোর পর টার্মিনালে ইন্সটলেশন শেষ হওয়া পর্যন্ত অপেক্ষা করুন এবং শেষে আপনার ব্রাউজারে LuCI রিফ্রেশ দিন।)
