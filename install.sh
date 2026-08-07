@@ -3,7 +3,7 @@
 echo "========================================================"
 echo "    BDIX BYPASS - AUTO INSTALLER (UNIVERSAL)             "
 echo "    Developed by: Jahid Hasan Shuvo (@crazy_boy_jahid)   "
-echo "    Version: 2.3 (Any Port + Any Proxy)                  "
+echo "    Version: 2.4 (HTTP Full Fix)                         "
 echo "========================================================"
 sleep 2
 
@@ -183,7 +183,6 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
            local conf = luci.util.exec("cat /etc/redsocks.conf 2>/dev/null") or ""
            local ptype = conf:match("type%s*=%s*([^;]+)") or "socks5"
            ptype = ptype:gsub("%s+", "")
-           if ptype == "http-connect" or ptype == "http-relay" then ptype = "http" end
            local user = conf:match('login%s*=%s*"([^"]*)"') or ""
            local pass = conf:match('password%s*=%s*"([^"]*)"') or ""
            local ip = ""
@@ -207,7 +206,8 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
                 <select name="ptype" id="proxyType" class="proxy-select" onchange="showProxyInfo()">
                     <option value="socks5" <%if ptype == "socks5" then%>selected<%end%>>🧦 SOCKS5</option>
                     <option value="socks4" <%if ptype == "socks4" then%>selected<%end%>>🧦 SOCKS4</option>
-                    <option value="http" <%if ptype == "http" then%>selected<%end%>>🌐 HTTP / HTTPS</option>
+                    <option value="http-connect" <%if ptype == "http-connect" then%>selected<%end%>>🌐 HTTP Connect (HTTPS)</option>
+                    <option value="http-relay" <%if ptype == "http-relay" then%>selected<%end%>>🌐 HTTP Relay (HTTP Only)</option>
                 </select>
                 <span class="proxy-arrow">▼</span>
             </div>
@@ -242,7 +242,7 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
             <div class="dev-title">❤️ DEVELOPED BY ❤️</div>
             <div class="dev-name">Jahid Hasan Shuvo</div>
             <a href="https://instagram.com/crazy_boy_jahid" target="_blank" class="ig-link">@crazy_boy_jahid</a>
-            <div class="version-tag">v2.3 • Any Port + Any Proxy</div>
+            <div class="version-tag">v2.4 • HTTP Full Fix</div>
         </div>
     </div>
 
@@ -315,13 +315,15 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
     var proxyNames = {
         'socks5': '🧦 SOCKS5 Selected',
         'socks4': '🧦 SOCKS4 Selected',
-        'http': '🌐 HTTP/HTTPS Selected'
+        'http-connect': '🌐 HTTP Connect Selected',
+        'http-relay': '🌐 HTTP Relay Selected'
     };
 
     var proxyInfoData = {
-        'socks5': '✅ SOCKS5 proxy<br>📌 সবচেয়ে জনপ্রিয় এবং নির্ভরযোগ্য<br>📌 যেকোনো port এ কাজ করবে<br>📌 সব ধরনের traffic সাপোর্ট করে',
-        'socks4': '✅ SOCKS4 proxy<br>📌 Lightweight এবং দ্রুত<br>📌 যেকোনো port এ কাজ করবে<br>📌 TCP traffic সাপোর্ট করে',
-        'http': '✅ HTTP/HTTPS proxy<br>📌 HTTP + HTTPS দুইটাই চলবে<br>📌 যেকোনো port এ কাজ করবে<br>📌 BD BDIX HTTP proxy fully supported'
+        'socks5': '✅ SOCKS5 proxy<br>📌 সবচেয়ে জনপ্রিয় এবং নির্ভরযোগ্য<br>📌 HTTP + HTTPS + সব traffic চলবে<br>📌 BDIX bypass এর জন্য সেরা',
+        'socks4': '✅ SOCKS4 proxy<br>📌 Lightweight এবং দ্রুত<br>📌 TCP traffic সাপোর্ট করে<br>📌 বাংলাদেশের ISP তে ভালো কাজ করে',
+        'http-connect': '✅ HTTP Connect proxy<br>📌 HTTPS সাইট (Google, Facebook, YouTube) চলবে<br>📌 HTTP সাইটও চলবে<br>📌 বেশিরভাগ HTTP proxy তে এটা ব্যবহার করুন<br>⚡ <b>প্রথমে এটা ট্রাই করুন!</b>',
+        'http-relay': '✅ HTTP Relay proxy<br>📌 শুধু HTTP সাইট চলবে<br>📌 HTTPS সাইট চলবে না<br>📌 HTTP Connect কাজ না করলে এটা ট্রাই করুন<br>⚠️ <b>HTTPS সাইট কাজ করবে না</b>'
     };
 
     function showProxyInfo() {
@@ -396,16 +398,16 @@ if [ "$ACT" = "save" ]; then
         exit 0
     fi
 
-    # Sanitize input - only allow safe characters
     IP=$(echo "$IP" | sed 's/[^0-9.]//g')
     PORT=$(echo "$PORT" | sed 's/[^0-9]//g')
 
     LOGIN_LINE="login = \"${USER}\";"
     PASS_LINE="password = \"${PASS}\";"
 
-    # Map proxy type
+    # URL decode converts - to %2D, fix ptype
     case "$PTYPE" in
-        http) RTYPE="http-connect" ;;
+        http-connect|http%2Dconnect) RTYPE="http-connect" ;;
+        http-relay|http%2Drelay) RTYPE="http-relay" ;;
         socks5) RTYPE="socks5" ;;
         socks4) RTYPE="socks4" ;;
         *) RTYPE="socks5" ;;
@@ -445,14 +447,13 @@ rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
 /etc/init.d/uhttpd restart
 
 echo "========================================================================"
-echo "    INSTALLED SUCCESSFULLY v2.3                                         "
+echo "    INSTALLED SUCCESSFULLY v2.4                                         "
 echo "    Changes:                                                            "
-echo "      - Any Port: No port restriction, works with any port             "
-echo "      - Proxy IP auto-excluded from redirect (no loop)                 "
-echo "      - All private ranges excluded (RFC1918 + CGNAT)                  "
-echo "      - Input sanitization (IP & Port validation)                      "
-echo "      - HTTP → http-connect auto mapping                              "
-echo "      - Multi Proxy: SOCKS5, SOCKS4, HTTP/HTTPS                        "
+echo "      - HTTP Connect & HTTP Relay separated                            "
+echo "      - URL decode fix for proxy type                                  "
+echo "      - Any port support                                               "
+echo "      - Proxy IP auto excluded from iptables                           "
+echo "      - Multi Proxy: SOCKS5, SOCKS4, HTTP Connect, HTTP Relay          "
 echo "      - Auth Enable/Disable (All Proxy Types)                          "
 echo "    SEND A FEEDBACK TO @crazy_boy_jahid                                "
 echo "========================================================================"
