@@ -32,6 +32,7 @@ echo "  ✓ NAT rules cleaned"
 echo -e "\n[3/6] Removing config and init files..."
 rm -f /etc/init.d/redsocks && echo "  ✓ /etc/init.d/redsocks removed" || echo "  - Not found (skipped)"
 rm -f /etc/redsocks.conf && echo "  ✓ /etc/redsocks.conf removed" || echo "  - Not found (skipped)"
+rm -f /var/run/redsocks.pid 2>/dev/null && echo "  ✓ PID file removed" || echo "  - PID not found (skipped)"
 
 # [4/6] LuCI UI Files Remove
 echo -e "\n[4/6] Removing LuCI UI files..."
@@ -51,6 +52,7 @@ rm -rf /tmp/luci-sessions/* 2>/dev/null && echo "  ✓ luci-sessions cleared"
 echo -e "\n[6/6] Restarting services & verifying..."
 /etc/init.d/rpcd restart
 /etc/init.d/uhttpd restart
+sleep 1
 echo ""
 
 echo "────────────────────────────────────────"
@@ -60,7 +62,6 @@ echo "────────────────────────�
 PASS=0
 FAIL=0
 
-# Check each file
 if [ ! -f /etc/redsocks.conf ]; then
     echo "  ✅ Config file        - REMOVED"
     PASS=$((PASS+1))
@@ -109,7 +110,6 @@ else
     FAIL=$((FAIL+1))
 fi
 
-# IPTables check
 if ! iptables -t nat -L REDSOCKS >/dev/null 2>&1; then
     echo "  ✅ IPTables rules     - CLEANED"
     PASS=$((PASS+1))
@@ -126,14 +126,14 @@ if [ "$FAIL" -eq 0 ]; then
     echo ""
     echo "========================================================"
     echo "    ✅ CLEANUP 100% COMPLETE!                            "
-    echo "    BDIX BYPASS v2.0 REMOVED SUCCESSFULLY                "
-    echo "    FEEDBACK: @crazy_boy_jahid                           "
+    echo "    BDIX BYPASS v2.0 REMOVED SUCCESSFULLY               "
+    echo "    FEEDBACK: @crazy_boy_jahid                          "
     echo "========================================================"
 else
     echo ""
     echo "========================================================"
     echo "    ⚠️  SOME FILES COULD NOT BE REMOVED                  "
     echo "    Please reboot router and run again                   "
-    echo "    FEEDBACK: @crazy_boy_jahid                           "
+    echo "    FEEDBACK: @crazy_boy_jahid                          "
     echo "========================================================"
 fi
