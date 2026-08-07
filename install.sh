@@ -3,7 +3,7 @@
 echo "========================================================"
 echo "    BDIX BYPASS - AUTO INSTALLER (UNIVERSAL)             "
 echo "    Developed by: Jahid Hasan Shuvo (@crazy_boy_jahid)   "
-echo "    Version: 2.0 (Multi-Proxy Support)                   "
+echo "    Version: 2.1 (Multi-Proxy + HTTP Fix)                "
 echo "========================================================"
 sleep 2
 
@@ -24,7 +24,6 @@ echo -e "\n[2/4] Configuring Redsocks Backend..."
 cat <<'EOF' > /etc/init.d/redsocks
 #!/bin/sh /etc/rc.common
 START=90
-PORT=1337
 
 iptable_start() {
     iptables -t nat -N REDSOCKS 2>/dev/null
@@ -33,7 +32,7 @@ iptable_start() {
     iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN
     iptables -t nat -A REDSOCKS -d 100.64.0.0/10 -j RETURN
     iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN
-    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports ${PORT}
+    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 1337
     iptables -t nat -A PREROUTING -p tcp -i br-lan -j REDSOCKS
 }
 
@@ -122,13 +121,20 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
     .main-wrapper { display: flex; width: 100%; max-width: 1050px; margin: 40px auto; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); color: #fff; }
     .form-side { width: 38%; padding: 35px; background: #1e293b; border-right: 2px solid #334155; }
     .dash-side { width: 62%; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #263345; }
-    .input-field { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; background: #0f172a; color: #f1f5f9; font-size: 14px; }
+    .input-field { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; background: #0f172a; color: #f1f5f9; font-size: 14px; box-sizing: border-box; }
     .input-field:focus { border-color: #f59e0b; outline: none; }
     .input-field:disabled { opacity: 0.4; cursor: not-allowed; }
-    .select-field { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; background: #0f172a; color: #f1f5f9; font-size: 14px; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f59e0b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
-    .select-field:focus { border-color: #f59e0b; outline: none; }
-    .select-field option { background: #0f172a; color: #f1f5f9; padding: 10px; }
-    .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 13px; }
+
+    /* FIXED: Proxy Type Selector - Visible Selected Value */
+    .proxy-select-box { position: relative; margin-bottom: 12px; }
+    .proxy-select { width: 100%; padding: 14px 45px 14px 14px; border: 2px solid #334155; border-radius: 10px; background: #0f172a; color: #f59e0b; font-size: 15px; font-weight: bold; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; box-sizing: border-box; }
+    .proxy-select:focus { border-color: #f59e0b; outline: none; box-shadow: 0 0 10px rgba(245,158,11,0.3); }
+    .proxy-select option { background: #0f172a; color: #f1f5f9; padding: 12px; font-size: 14px; font-weight: normal; }
+    .proxy-select option:checked { background: #1e3a5f; color: #f59e0b; }
+    .proxy-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #f59e0b; font-size: 14px; pointer-events: none; }
+    .proxy-selected-label { margin-top: 6px; padding: 6px 12px; background: #162032; border-radius: 6px; font-size: 12px; color: #f59e0b; display: inline-block; border: 1px solid #f59e0b33; }
+
+    .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 13px; box-sizing: border-box; }
     .btn:hover { opacity: 0.85; transform: translateY(-1px); }
     .theme-btn { margin-bottom: 15px; padding: 6px 16px; border-radius: 5px; background: transparent; border: 1px solid #475569; color: white; cursor: pointer; font-size: 13px; }
     .slider-img { width: 100%; max-width: 550px; height: 350px; object-fit: cover; border-radius: 10px; border: 2px solid #f59e0b; }
@@ -142,7 +148,7 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
     .auth-off { background: #475569; color: #94a3b8; }
     .auth-fields { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; padding: 0 5px; }
     .auth-fields.show { max-height: 200px; opacity: 1; padding-top: 12px; }
-    .proxy-info { font-size: 11px; color: #64748b; margin-top: -8px; margin-bottom: 12px; padding: 8px; background: #162032; border-radius: 6px; border-left: 3px solid #f59e0b; }
+    .proxy-info { font-size: 11px; color: #94a3b8; margin-top: 6px; margin-bottom: 12px; padding: 10px; background: #162032; border-radius: 8px; border-left: 3px solid #f59e0b; line-height: 1.6; }
     .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
     .status-running { background: #0d9488; color: white; }
     .status-stopped { background: #e11d48; color: white; }
@@ -185,17 +191,21 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
                    port = port:gsub("%s+", "")
                end
            end
+           if ptype == "http-connect" or ptype == "http-relay" then ptype = "http" end
            local has_auth = (user ~= "" and user ~= nil)
         %>
 
         <form method="post" action="/cgi-bin/redsocks_ctl">
             <div class="section-label">🔌 Proxy Type</div>
-            <select name="ptype" id="proxyType" class="select-field" onchange="showProxyInfo()">
-                <option value="socks5" <%if ptype == "socks5" then%>selected<%end%>>🧦 SOCKS5</option>
-                <option value="socks4" <%if ptype == "socks4" then%>selected<%end%>>🧦 SOCKS4</option>
-                <option value="http-connect" <%if ptype == "http-connect" then%>selected<%end%>>🌐 HTTP Connect</option>
-                <option value="http-relay" <%if ptype == "http-relay" then%>selected<%end%>>🌐 HTTP Relay</option>
-            </select>
+            <div class="proxy-select-box">
+                <select name="ptype" id="proxyType" class="proxy-select" onchange="showProxyInfo()">
+                    <option value="socks5" <%if ptype == "socks5" then%>selected<%end%>>🧦 SOCKS5</option>
+                    <option value="socks4" <%if ptype == "socks4" then%>selected<%end%>>🧦 SOCKS4</option>
+                    <option value="http" <%if ptype == "http" then%>selected<%end%>>🌐 HTTP / HTTPS</option>
+                </select>
+                <span class="proxy-arrow">▼</span>
+            </div>
+            <div id="currentType" class="proxy-selected-label"></div>
             <div id="proxyInfo" class="proxy-info" style="display:none;"></div>
 
             <div class="section-label">🌐 Proxy Server</div>
@@ -226,7 +236,7 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
             <div class="dev-title">❤️ DEVELOPED BY ❤️</div>
             <div class="dev-name">Jahid Hasan Shuvo</div>
             <a href="https://instagram.com/crazy_boy_jahid" target="_blank" class="ig-link">@crazy_boy_jahid</a>
-            <div class="version-tag">v2.0 • Multi-Proxy Support</div>
+            <div class="version-tag">v2.1 • Multi-Proxy + HTTP Fix</div>
         </div>
     </div>
 
@@ -297,17 +307,29 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
     }
     initAuth();
 
+    var proxyNames = {
+        'socks5': '🧦 SOCKS5 Selected',
+        'socks4': '🧦 SOCKS4 Selected',
+        'http': '🌐 HTTP/HTTPS Selected'
+    };
+
     var proxyInfoData = {
-        'socks5': '🧦 SOCKS5 - Most popular. Best for BDIX bypass.',
-        'socks4': '🧦 SOCKS4 - Lightweight proxy. Works with most BD ISPs.',
-        'http-connect': '🌐 HTTP Connect - For HTTPS sites. Select this for HTTP proxy.',
-        'http-relay': '🌐 HTTP Relay - HTTP only sites. HTTPS will not work.'
+        'socks5': '✅ SOCKS5 proxy ব্যবহার করুন।<br>📌 সবচেয়ে জনপ্রিয় এবং নির্ভরযোগ্য।<br>📌 BDIX bypass এর জন্য সেরা।<br>📌 Authentication সাপোর্ট করে।',
+        'socks4': '✅ SOCKS4 proxy ব্যবহার করুন।<br>📌 Lightweight এবং দ্রুত।<br>📌 বাংলাদেশের ISP গুলোর সাথে ভালো কাজ করে।<br>📌 Authentication সাপোর্ট করে।',
+        'http': '✅ HTTP proxy ব্যবহার করুন।<br>📌 HTTP + HTTPS দুইটাই চলবে।<br>📌 Port 80 (HTTP) ও Port 443 (HTTPS) অটো হ্যান্ডেল হবে।<br>📌 Authentication সাপোর্ট করে।'
     };
 
     function showProxyInfo() {
         var select = document.getElementById('proxyType');
         var info = document.getElementById('proxyInfo');
+        var label = document.getElementById('currentType');
         var val = select.value;
+
+        if (proxyNames[val]) {
+            label.textContent = proxyNames[val];
+            label.style.display = 'inline-block';
+        }
+
         if (proxyInfoData[val]) {
             info.innerHTML = proxyInfoData[val];
             info.style.display = 'block';
@@ -370,7 +392,88 @@ if [ "$ACT" = "save" ]; then
         exit 0
     fi
 
-    cat > /etc/redsocks.conf <<CONFEOF
+    LOGIN_LINE="login = \"${USER}\";"
+    PASS_LINE="password = \"${PASS}\";"
+
+    if [ "$PTYPE" = "http" ]; then
+        cat > /etc/redsocks.conf <<CONFEOF
+base { log_debug = off; log_info = off; daemon = on; redirector = iptables; }
+redsocks {
+    local_ip = 0.0.0.0;
+    local_port = 1337;
+    ip = ${IP};
+    port = ${PORT};
+    type = http-connect;
+    ${LOGIN_LINE}
+    ${PASS_LINE}
+}
+redsocks {
+    local_ip = 0.0.0.0;
+    local_port = 1338;
+    ip = ${IP};
+    port = ${PORT};
+    type = http-relay;
+    ${LOGIN_LINE}
+    ${PASS_LINE}
+}
+CONFEOF
+
+        # Update iptables for dual port
+        cat > /etc/init.d/redsocks <<'INITEOF'
+#!/bin/sh /etc/rc.common
+START=90
+
+iptable_start() {
+    iptables -t nat -N REDSOCKS 2>/dev/null
+    iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A REDSOCKS -d 100.64.0.0/10 -j RETURN
+    iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -A REDSOCKS -p tcp --dport 443 -j REDIRECT --to-ports 1337
+    iptables -t nat -A REDSOCKS -p tcp --dport 80 -j REDIRECT --to-ports 1338
+    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 1337
+    iptables -t nat -A PREROUTING -p tcp -i br-lan -j REDSOCKS
+}
+
+iptable_stop() {
+    iptables -t nat -D PREROUTING -p tcp -i br-lan -j REDSOCKS 2>/dev/null
+    iptables -t nat -F REDSOCKS 2>/dev/null
+    iptables -t nat -X REDSOCKS 2>/dev/null
+}
+
+start() {
+    if [ -f /var/run/redsocks.pid ]; then
+        echo "RedSocks Already Running"
+    else
+        iptable_start
+        /usr/sbin/redsocks -c /etc/redsocks.conf -p /var/run/redsocks.pid
+        echo "RedSocks Started (HTTP/HTTPS Mode)"
+    fi
+}
+
+stop() {
+    if [ -f /var/run/redsocks.pid ]; then
+        kill $(cat /var/run/redsocks.pid)
+        rm -f /var/run/redsocks.pid
+        iptable_stop
+        echo "RedSocks Stopped"
+    else
+        iptable_stop
+        echo "RedSocks Stopped (force cleanup)"
+    fi
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+INITEOF
+        chmod +x /etc/init.d/redsocks
+
+    else
+        cat > /etc/redsocks.conf <<CONFEOF
 base { log_debug = off; log_info = off; daemon = on; redirector = iptables; }
 redsocks {
     local_ip = 0.0.0.0;
@@ -378,10 +481,62 @@ redsocks {
     ip = ${IP};
     port = ${PORT};
     type = ${PTYPE};
-    login = "${USER}";
-    password = "${PASS}";
+    ${LOGIN_LINE}
+    ${PASS_LINE}
 }
 CONFEOF
+
+        cat > /etc/init.d/redsocks <<'INITEOF'
+#!/bin/sh /etc/rc.common
+START=90
+
+iptable_start() {
+    iptables -t nat -N REDSOCKS 2>/dev/null
+    iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN
+    iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A REDSOCKS -d 100.64.0.0/10 -j RETURN
+    iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN
+    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 1337
+    iptables -t nat -A PREROUTING -p tcp -i br-lan -j REDSOCKS
+}
+
+iptable_stop() {
+    iptables -t nat -D PREROUTING -p tcp -i br-lan -j REDSOCKS 2>/dev/null
+    iptables -t nat -F REDSOCKS 2>/dev/null
+    iptables -t nat -X REDSOCKS 2>/dev/null
+}
+
+start() {
+    if [ -f /var/run/redsocks.pid ]; then
+        echo "RedSocks Already Running"
+    else
+        iptable_start
+        /usr/sbin/redsocks -c /etc/redsocks.conf -p /var/run/redsocks.pid
+        echo "RedSocks Started"
+    fi
+}
+
+stop() {
+    if [ -f /var/run/redsocks.pid ]; then
+        kill $(cat /var/run/redsocks.pid)
+        rm -f /var/run/redsocks.pid
+        iptable_stop
+        echo "RedSocks Stopped"
+    else
+        iptable_stop
+        echo "RedSocks Stopped (force cleanup)"
+    fi
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+INITEOF
+        chmod +x /etc/init.d/redsocks
+    fi
 
 elif [ "$ACT" = "start" ]; then
     /etc/init.d/redsocks stop 2>/dev/null
@@ -404,12 +559,14 @@ rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
 /etc/init.d/uhttpd restart
 
 echo "========================================================================"
-echo "    INSTALLED SUCCESSFULLY v2.0                                         "
+echo "    INSTALLED SUCCESSFULLY v2.1                                         "
 echo "    New Features:                                                       "
-echo "      - Multi Proxy: SOCKS5, SOCKS4, HTTP Connect, HTTP Relay           "
-echo "      - Auth Enable/Disable (All Proxy Types)                           "
-echo "      - Proxy Type Info Helper                                          "
-echo "      - Live Status Badge (Running/Stopped)                             "
-echo "      - URL Decode Security Fix                                         "
-echo "    SEND A FEEDBACK TO @crazy_boy_jahid                                 "
+echo "      - Multi Proxy: SOCKS5, SOCKS4, HTTP/HTTPS                        "
+echo "      - HTTP Proxy: HTTP + HTTPS Both Supported                        "
+echo "      - Visible Proxy Type Selection with Label                        "
+echo "      - Auth Enable/Disable (All Proxy Types)                          "
+echo "      - Proxy Type Info Helper (Bangla)                                "
+echo "      - Live Status Badge (Running/Stopped)                            "
+echo "      - URL Decode Security Fix                                        "
+echo "    SEND A FEEDBACK TO @crazy_boy_jahid                                "
 echo "========================================================================"
