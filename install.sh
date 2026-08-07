@@ -3,7 +3,6 @@
 echo "========================================================"
 echo "    BDIX BYPASS - AUTO INSTALLER (UNIVERSAL)             "
 echo "    Developed by: Jahid Hasan Shuvo (@crazy_boy_jahid)   "
-echo "    Version: 2.4 (HTTP Full Fix)                         "
 echo "========================================================"
 sleep 2
 
@@ -24,24 +23,14 @@ echo -e "\n[2/4] Configuring Redsocks Backend..."
 cat <<'EOF' > /etc/init.d/redsocks
 #!/bin/sh /etc/rc.common
 START=90
+PORT=1337
 
 iptable_start() {
     iptables -t nat -N REDSOCKS 2>/dev/null
-    iptables -t nat -F REDSOCKS 2>/dev/null
-    iptables -t nat -A REDSOCKS -d 0.0.0.0/8 -j RETURN
-    iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN
-    iptables -t nat -A REDSOCKS -d 100.64.0.0/10 -j RETURN
-    iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN
-    iptables -t nat -A REDSOCKS -d 169.254.0.0/16 -j RETURN
-    iptables -t nat -A REDSOCKS -d 172.16.0.0/12 -j RETURN
     iptables -t nat -A REDSOCKS -d 192.168.0.0/16 -j RETURN
-    iptables -t nat -A REDSOCKS -d 224.0.0.0/4 -j RETURN
-    iptables -t nat -A REDSOCKS -d 240.0.0.0/4 -j RETURN
-    PROXY_IP=$(grep -m1 "^[^l]*ip =" /etc/redsocks.conf | sed 's/.*= *//;s/ *;.*//')
-    if [ -n "$PROXY_IP" ]; then
-        iptables -t nat -A REDSOCKS -d "$PROXY_IP" -j RETURN
-    fi
-    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports 1337
+    iptables -t nat -A REDSOCKS -d 10.0.0.0/8 -j RETURN
+    iptables -t nat -A REDSOCKS -d 127.0.0.0/8 -j RETURN
+    iptables -t nat -A REDSOCKS -p tcp -j REDIRECT --to-ports ${PORT}
     iptables -t nat -A PREROUTING -p tcp -i br-lan -j REDSOCKS
 }
 
@@ -67,16 +56,7 @@ stop() {
         rm -f /var/run/redsocks.pid
         iptable_stop
         echo "RedSocks Stopped"
-    else
-        iptable_stop
-        echo "RedSocks Stopped (force cleanup)"
     fi
-}
-
-restart() {
-    stop
-    sleep 1
-    start
 }
 EOF
 chmod +x /etc/init.d/redsocks
@@ -86,11 +66,11 @@ base { log_debug = off; log_info = off; daemon = on; redirector = iptables; }
 redsocks {
     local_ip = 0.0.0.0;
     local_port = 1337;
-    ip = 0.0.0.0;
-    port = 0;
+    ip = Type_your_Proxy;
+    port = Type_your_Port;
     type = socks5;
-    login = "";
-    password = "";
+    login = "Type_your_username";
+    password = "Type_your_password";
 }
 EOF
 
@@ -127,132 +107,53 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
     :root { --bg: #e2e8f0; --text: #1e293b; --card-bg: #1e293b; --accent: #f59e0b; }
     .dark-mode { --bg: #0f172a; --text: #f1f5f9; --card-bg: #1e293b; }
     body { background-color: var(--bg) !important; color: var(--text) !important; transition: 0.3s; }
-    .main-wrapper { display: flex; width: 100%; max-width: 1050px; margin: 40px auto; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); color: #fff; }
-    .form-side { width: 38%; padding: 35px; background: #1e293b; border-right: 2px solid #334155; overflow-y: auto; max-height: 90vh; }
-    .dash-side { width: 62%; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #263345; }
-    .input-field { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; margin-bottom: 12px; background: #0f172a; color: #f1f5f9; font-size: 14px; box-sizing: border-box; }
-    .input-field:focus { border-color: #f59e0b; outline: none; }
-    .input-field:disabled { opacity: 0.4; cursor: not-allowed; }
-    .proxy-select-box { position: relative; margin-bottom: 8px; }
-    .proxy-select { width: 100%; padding: 14px 45px 14px 14px; border: 2px solid #334155; border-radius: 10px; background: #0f172a; color: #f59e0b; font-size: 15px; font-weight: bold; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; box-sizing: border-box; }
-    .proxy-select:focus { border-color: #f59e0b; outline: none; box-shadow: 0 0 10px rgba(245,158,11,0.3); }
-    .proxy-select option { background: #0f172a; color: #f1f5f9; padding: 12px; font-size: 14px; font-weight: normal; }
-    .proxy-select option:checked { background: #1e3a5f; color: #f59e0b; }
-    .proxy-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #f59e0b; font-size: 14px; pointer-events: none; }
-    .proxy-selected-label { margin-top: 4px; margin-bottom: 8px; padding: 6px 12px; background: #162032; border-radius: 6px; font-size: 12px; color: #f59e0b; display: inline-block; border: 1px solid #f59e0b33; }
-    .btn { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; font-size: 13px; box-sizing: border-box; }
-    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
-    .theme-btn { margin-bottom: 15px; padding: 6px 16px; border-radius: 5px; background: transparent; border: 1px solid #475569; color: white; cursor: pointer; font-size: 13px; }
+    .main-wrapper { display: flex; width: 100%; max-width: 1000px; margin: 40px auto; background: #1e293b; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.3); color: #fff; }
+    .form-side { width: 35%; padding: 40px; background: #1e293b; border-right: 2px solid #334155; }
+    .dash-side { width: 65%; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #263345; }
+    .input-field { width: 100%; padding: 12px; border: 1px solid #334155; border-radius: 8px; margin-bottom: 15px; background: #1e293b; color: white; }
+    .btn { padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+    .theme-btn { margin-bottom: 20px; padding: 5px 15px; border-radius: 5px; background: transparent; border: 1px solid #475569; color: white; cursor: pointer; }
     .slider-img { width: 100%; max-width: 550px; height: 350px; object-fit: cover; border-radius: 10px; border: 2px solid #f59e0b; }
-    .section-label { font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 1px; margin-bottom: 6px; margin-top: 10px; }
-    .auth-box { margin-bottom: 12px; }
-    .auth-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #162032; border-radius: 8px; cursor: pointer; border: 1px solid #334155; transition: 0.3s; }
-    .auth-header:hover { border-color: #f59e0b; }
-    .auth-label { font-size: 13px; color: #94a3b8; }
-    .auth-status { font-size: 12px; font-weight: bold; padding: 3px 10px; border-radius: 12px; }
-    .auth-on { background: #0d9488; color: white; }
-    .auth-off { background: #475569; color: #94a3b8; }
-    .auth-fields { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s ease; padding: 0 5px; }
-    .auth-fields.show { max-height: 200px; opacity: 1; padding-top: 12px; }
-    .proxy-info { font-size: 11px; color: #94a3b8; margin-bottom: 10px; padding: 10px; background: #162032; border-radius: 8px; border-left: 3px solid #f59e0b; line-height: 1.6; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-    .status-running { background: #0d9488; color: white; }
-    .status-stopped { background: #e11d48; color: white; }
-    .branding-box { margin-top: 20px; padding: 12px; border-radius: 10px; background: #263345; text-align: center; border-left: 4px solid #f59e0b; }
-    .dev-title { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-    .dev-name { font-size: 0.85rem; font-weight: bold; margin: 4px 0; }
-    .ig-link { font-size: 0.75rem; color: #f59e0b; text-decoration: none; font-weight: bold; }
-    .version-tag { font-size: 10px; color: #475569; margin-top: 6px; }
+    
+    /* Branding Styles */
+    .branding-box { margin-top: 30px; padding: 15px; border-radius: 10px; background: #263345; text-align: center; border-left: 4px solid #f59e0b; }
+    .dev-title { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+    .dev-name { font-size: 0.9rem; font-weight: bold; margin: 5px 0; }
+    .ig-link { font-size: 0.8rem; color: #f59e0b; text-decoration: none; font-weight: bold; }
 </style>
 
 <div class="main-wrapper">
     <div class="form-side">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-            <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle</button>
-            <% local pid = luci.util.exec("cat /var/run/redsocks.pid 2>/dev/null"):gsub("%s+", "") %>
-            <% if pid ~= "" then %>
-                <span class="status-badge status-running">● RUNNING</span>
-            <% else %>
-                <span class="status-badge status-stopped">● STOPPED</span>
-            <% end %>
-        </div>
-
-        <h2 style="margin:10px 0 5px 0;">⚡ BDIX BYPASS</h2>
-
-        <%
-           local conf = luci.util.exec("cat /etc/redsocks.conf 2>/dev/null") or ""
-           local ptype = conf:match("type%s*=%s*([^;]+)") or "socks5"
-           ptype = ptype:gsub("%s+", "")
-           local user = conf:match('login%s*=%s*"([^"]*)"') or ""
-           local pass = conf:match('password%s*=%s*"([^"]*)"') or ""
-           local ip = ""
-           local port = ""
-           for line in conf:gmatch("[^\n]+") do
-               if line:match("^%s*ip%s*=") and not line:match("local_ip") then
-                   ip = line:match("=%s*([^;]+)") or ""
-                   ip = ip:gsub("%s+", "")
-               end
-               if line:match("^%s*port%s*=") and not line:match("local_port") then
-                   port = line:match("=%s*([^;]+)") or ""
-                   port = port:gsub("%s+", "")
-               end
-           end
-           local has_auth = (user ~= "" and user ~= nil)
-        %>
-
+        <button class="theme-btn" onclick="toggleTheme()">🌓 Toggle Mode</button>
+        <h2>BDIX_BYPASS</h2>
+        <% local ip = luci.util.exec("grep -m1 '^[^l]*ip =' /etc/redsocks.conf | cut -d'=' -f2 | tr -d ' ;'")
+            local port = luci.util.exec("grep -m1 '^[^l]*port =' /etc/redsocks.conf | cut -d'=' -f2 | tr -d ' ;'")
+            local user = luci.util.exec("grep -m1 '^login =' /etc/redsocks.conf | cut -d'=' -f2 | tr -d ' ;\"'")
+            local pass = luci.util.exec("grep -m1 '^password =' /etc/redsocks.conf | cut -d'=' -f2 | tr -d ' ;\"'") %>
         <form method="post" action="/cgi-bin/redsocks_ctl">
-            <div class="section-label">🔌 Proxy Type</div>
-            <div class="proxy-select-box">
-                <select name="ptype" id="proxyType" class="proxy-select" onchange="showProxyInfo()">
-                    <option value="socks5" <%if ptype == "socks5" then%>selected<%end%>>🧦 SOCKS5</option>
-                    <option value="socks4" <%if ptype == "socks4" then%>selected<%end%>>🧦 SOCKS4</option>
-                    <option value="http-connect" <%if ptype == "http-connect" then%>selected<%end%>>🌐 HTTP Connect (HTTPS)</option>
-                    <option value="http-relay" <%if ptype == "http-relay" then%>selected<%end%>>🌐 HTTP Relay (HTTP Only)</option>
-                </select>
-                <span class="proxy-arrow">▼</span>
-            </div>
-            <div id="currentType" class="proxy-selected-label"></div>
-            <div id="proxyInfo" class="proxy-info" style="display:none;"></div>
-
-            <div class="section-label">🌐 Proxy Server</div>
-            <input type="text" name="ip" value="<%=ip%>" class="input-field" placeholder="Proxy IP (e.g. 103.84.39.93)">
-            <input type="text" name="port" value="<%=port%>" class="input-field" placeholder="Proxy Port (any port)">
-
-            <div class="section-label">🔐 Authentication</div>
-            <div class="auth-box">
-                <div class="auth-header" onclick="toggleAuth()" id="authHeader">
-                    <span class="auth-label">🔐 Username & Password</span>
-                    <span class="auth-status auth-off" id="authBadge">DISABLED</span>
-                </div>
-                <input type="hidden" name="auth" id="authValue" value="<%if has_auth then%>on<%else%>off<%end%>">
-                <div id="authFields" class="auth-fields">
-                    <input type="text" name="user" id="userField" value="<%=user%>" class="input-field" placeholder="Username" <%if not has_auth then%>disabled<%end%>>
-                    <input type="password" name="pass" id="passField" value="<%=pass%>" class="input-field" placeholder="Password" <%if not has_auth then%>disabled<%end%>>
-                </div>
-            </div>
-
-            <div style="display:flex; gap:8px; margin-top:12px;">
-                <button type="submit" name="act" value="save" class="btn" style="background:#f59e0b; color:#000; flex:1;">💾 SAVE</button>
-                <button type="submit" name="act" value="start" class="btn" style="background:#0d9488; flex:1;">🚀 BOOST</button>
-                <button type="submit" name="act" value="stop" class="btn" style="background:#e11d48; flex:1;">🛑 STOP</button>
+            <input type="text" name="ip" value="<%=ip%>" class="input-field" placeholder="Proxy IP">
+            <input type="text" name="port" value="<%=port%>" class="input-field" placeholder="Proxy Port">
+            <input type="text" name="user" value="<%=user%>" class="input-field" placeholder="Username">
+            <input type="password" name="pass" value="<%=pass%>" class="input-field" placeholder="Password">
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button type="submit" name="act" value="save" class="btn" style="background:#ffffff; color:#000; flex:1;">SAVE</button>
+                <button type="submit" name="act" value="start" class="btn" style="background:#0d9488; flex:1;">BOOST</button>
+                <button type="submit" name="act" value="stop" class="btn" style="background:#e11d48; flex:1;">STOP</button>
             </div>
         </form>
 
         <div class="branding-box">
-            <div class="dev-title">❤️ DEVELOPED BY ❤️</div>
+            <div class="dev-title">❤️DEVELOPED BY❤️</div>
             <div class="dev-name">Jahid Hasan Shuvo</div>
             <a href="https://instagram.com/crazy_boy_jahid" target="_blank" class="ig-link">@crazy_boy_jahid</a>
-            <div class="version-tag">v2.4 • HTTP Full Fix</div>
         </div>
     </div>
-
     <div class="dash-side">
         <img id="slider" src="https://i.postimg.cc/TP7Q9fk7/a-BDi-X-Bypass-Internet-(2).png" class="slider-img">
     </div>
 </div>
-
 <script>
-    var body = document.body;
+    const body = document.body;
     if (localStorage.getItem('theme') === 'dark-mode') {
         body.classList.add('dark-mode');
     }
@@ -261,184 +162,36 @@ cat << 'EOF' > /usr/lib/lua/luci/view/redsocks/index.htm
         localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark-mode' : 'light');
     }
 
-    var authEnabled = document.getElementById('authValue').value === 'on';
-
-    function toggleAuth() {
-        var fields = document.getElementById('authFields');
-        var badge = document.getElementById('authBadge');
-        var authVal = document.getElementById('authValue');
-        var userField = document.getElementById('userField');
-        var passField = document.getElementById('passField');
-        var header = document.getElementById('authHeader');
-
-        authEnabled = !authEnabled;
-
-        if (authEnabled) {
-            fields.className = 'auth-fields show';
-            badge.className = 'auth-status auth-on';
-            badge.textContent = 'ENABLED';
-            authVal.value = 'on';
-            userField.disabled = false;
-            passField.disabled = false;
-            header.style.borderColor = '#0d9488';
-        } else {
-            fields.className = 'auth-fields';
-            badge.className = 'auth-status auth-off';
-            badge.textContent = 'DISABLED';
-            authVal.value = 'off';
-            userField.disabled = true;
-            passField.disabled = true;
-            userField.value = '';
-            passField.value = '';
-            header.style.borderColor = '#334155';
-        }
-    }
-
-    function initAuth() {
-        var fields = document.getElementById('authFields');
-        var badge = document.getElementById('authBadge');
-        var header = document.getElementById('authHeader');
-        if (authEnabled) {
-            fields.className = 'auth-fields show';
-            badge.className = 'auth-status auth-on';
-            badge.textContent = 'ENABLED';
-            header.style.borderColor = '#0d9488';
-        } else {
-            fields.className = 'auth-fields';
-            badge.className = 'auth-status auth-off';
-            badge.textContent = 'DISABLED';
-            header.style.borderColor = '#334155';
-        }
-    }
-    initAuth();
-
-    var proxyNames = {
-        'socks5': '🧦 SOCKS5 Selected',
-        'socks4': '🧦 SOCKS4 Selected',
-        'http-connect': '🌐 HTTP Connect Selected',
-        'http-relay': '🌐 HTTP Relay Selected'
-    };
-
-    var proxyInfoData = {
-        'socks5': '✅ SOCKS5 proxy<br>📌 সবচেয়ে জনপ্রিয় এবং নির্ভরযোগ্য<br>📌 HTTP + HTTPS + সব traffic চলবে<br>📌 BDIX bypass এর জন্য সেরা',
-        'socks4': '✅ SOCKS4 proxy<br>📌 Lightweight এবং দ্রুত<br>📌 TCP traffic সাপোর্ট করে<br>📌 বাংলাদেশের ISP তে ভালো কাজ করে',
-        'http-connect': '✅ HTTP Connect proxy<br>📌 HTTPS সাইট (Google, Facebook, YouTube) চলবে<br>📌 HTTP সাইটও চলবে<br>📌 বেশিরভাগ HTTP proxy তে এটা ব্যবহার করুন<br>⚡ <b>প্রথমে এটা ট্রাই করুন!</b>',
-        'http-relay': '✅ HTTP Relay proxy<br>📌 শুধু HTTP সাইট চলবে<br>📌 HTTPS সাইট চলবে না<br>📌 HTTP Connect কাজ না করলে এটা ট্রাই করুন<br>⚠️ <b>HTTPS সাইট কাজ করবে না</b>'
-    };
-
-    function showProxyInfo() {
-        var select = document.getElementById('proxyType');
-        var info = document.getElementById('proxyInfo');
-        var label = document.getElementById('currentType');
-        var val = select.value;
-
-        if (proxyNames[val]) {
-            label.textContent = proxyNames[val];
-            label.style.display = 'inline-block';
-        }
-        if (proxyInfoData[val]) {
-            info.innerHTML = proxyInfoData[val];
-            info.style.display = 'block';
-        } else {
-            info.style.display = 'none';
-        }
-    }
-    showProxyInfo();
-
     var images = [
         "https://i.postimg.cc/TP7Q9fk7/a-BDi-X-Bypass-Internet-(2).png",
         "https://i.postimg.cc/Zqstdk65/a-BDi-X-Bypass-Internet-(1).png",
         "https://i.postimg.cc/Zn312C24/a-BDi-X-Bypass-Internet.png"
     ];
     var i = 0;
-    setInterval(function(){
-        i = (i + 1) % images.length;
-        document.getElementById('slider').src = images[i];
+    setInterval(function(){ 
+        i = (i + 1) % images.length; 
+        document.getElementById('slider').src = images[i]; 
     }, 3000);
 </script>
 <%+footer%>
 EOF
 
-cat << 'CGIEOF' > /www/cgi-bin/redsocks_ctl
+cat << 'EOF' > /www/cgi-bin/redsocks_ctl
 #!/bin/sh
-
-urldecode() {
-    local data="$1"
-    data=$(echo "$data" | sed 's/+/ /g')
-    printf '%b' "$(echo "$data" | sed 's/%\([0-9A-Fa-f][0-9A-Fa-f]\)/\\x\1/g')"
-}
-
 read -n "$CONTENT_LENGTH" POST_DATA
-
 ACT=$(echo "$POST_DATA" | grep -o 'act=[^&]*' | cut -d'=' -f2)
-
 if [ "$ACT" = "save" ]; then
-    PTYPE=$(echo "$POST_DATA" | grep -o 'ptype=[^&]*' | cut -d'=' -f2)
-    IP=$(echo "$POST_DATA" | grep -o 'ip=[^&]*' | cut -d'=' -f2)
-    PORT=$(echo "$POST_DATA" | grep -o 'port=[^&]*' | cut -d'=' -f2)
-    AUTH=$(echo "$POST_DATA" | grep -o 'auth=[^&]*' | cut -d'=' -f2)
-    USER=""
-    PASS=""
-
-    IP=$(urldecode "$IP")
-    PORT=$(urldecode "$PORT")
-    PTYPE=$(urldecode "$PTYPE")
-
-    if [ "$AUTH" = "on" ]; then
-        USER=$(echo "$POST_DATA" | grep -o 'user=[^&]*' | cut -d'=' -f2)
-        PASS=$(echo "$POST_DATA" | grep -o 'pass=[^&]*' | cut -d'=' -f2)
-        USER=$(urldecode "$USER")
-        PASS=$(urldecode "$PASS")
-    fi
-
-    if [ -z "$IP" ] || [ -z "$PORT" ]; then
-        echo "Status: 303 See Other"
-        echo "Location: /cgi-bin/luci/admin/services/redsocks"
-        echo ""
-        exit 0
-    fi
-
-    IP=$(echo "$IP" | sed 's/[^0-9.]//g')
-    PORT=$(echo "$PORT" | sed 's/[^0-9]//g')
-
-    LOGIN_LINE="login = \"${USER}\";"
-    PASS_LINE="password = \"${PASS}\";"
-
-    # URL decode converts - to %2D, fix ptype
-    case "$PTYPE" in
-        http-connect|http%2Dconnect) RTYPE="http-connect" ;;
-        http-relay|http%2Drelay) RTYPE="http-relay" ;;
-        socks5) RTYPE="socks5" ;;
-        socks4) RTYPE="socks4" ;;
-        *) RTYPE="socks5" ;;
-    esac
-
-    cat > /etc/redsocks.conf <<CONFEOF
-base { log_debug = off; log_info = off; daemon = on; redirector = iptables; }
-redsocks {
-    local_ip = 0.0.0.0;
-    local_port = 1337;
-    ip = ${IP};
-    port = ${PORT};
-    type = ${RTYPE};
-    ${LOGIN_LINE}
-    ${PASS_LINE}
-}
-CONFEOF
-
-elif [ "$ACT" = "start" ]; then
-    /etc/init.d/redsocks stop 2>/dev/null
-    sleep 1
-    /etc/init.d/redsocks start
-
-elif [ "$ACT" = "stop" ]; then
-    /etc/init.d/redsocks stop
+    IP=$(echo "$POST_DATA" | grep -o 'ip=[^&]*' | cut -d'=' -f2); PORT=$(echo "$POST_DATA" | grep -o 'port=[^&]*' | cut -d'=' -f2)
+    USER=$(echo "$POST_DATA" | grep -o 'user=[^&]*' | cut -d'=' -f2); PASS=$(echo "$POST_DATA" | grep -o 'pass=[^&]*' | cut -d'=' -f2)
+    sed -i "/^[^l]*ip =/s/ip = .*/ip = $IP;/" /etc/redsocks.conf
+    sed -i "/^[^l]*port =/s/port = .*/port = $PORT;/" /etc/redsocks.conf
+    sed -i "s/login = .*/login = \"$USER\";/" /etc/redsocks.conf
+    sed -i "s/password = .*/password = \"$PASS\";/" /etc/redsocks.conf
+elif [ "$ACT" = "start" ]; then /etc/init.d/redsocks stop; sleep 1; /etc/init.d/redsocks start
+elif [ "$ACT" = "stop" ]; then /etc/init.d/redsocks stop
 fi
-
-echo "Status: 303 See Other"
-echo "Location: /cgi-bin/luci/admin/services/redsocks"
-echo ""
-CGIEOF
+echo "Status: 303 See Other"; echo "Location: /cgi-bin/luci/admin/services/redsocks"; echo ""
+EOF
 chmod +x /www/cgi-bin/redsocks_ctl
 
 echo -e "\n[4/4] Finalizing..."
@@ -447,13 +200,5 @@ rm -rf /tmp/luci-indexcache /tmp/luci-modulecache/*
 /etc/init.d/uhttpd restart
 
 echo "========================================================================"
-echo "    INSTALLED SUCCESSFULLY v2.4                                         "
-echo "    Changes:                                                            "
-echo "      - HTTP Connect & HTTP Relay separated                            "
-echo "      - URL decode fix for proxy type                                  "
-echo "      - Any port support                                               "
-echo "      - Proxy IP auto excluded from iptables                           "
-echo "      - Multi Proxy: SOCKS5, SOCKS4, HTTP Connect, HTTP Relay          "
-echo "      - Auth Enable/Disable (All Proxy Types)                          "
-echo "    SEND A FEEDBACK TO @crazy_boy_jahid                                "
+echo "    INSTALLED SUCCESSFULLY. SEND A FEEDBACK TO @crazy_boy_jahid         "
 echo "========================================================================"
