@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "========================================================"
-echo "    BDIX BYPASS - FULL UNINSTALLER & CLEANER v2.0       "
+echo "    BDIX BYPASS - FULL UNINSTALLER & CLEANER v2.1       "
 echo "    Developed by: Jahid Hasan Shuvo (@crazy_boy_jahid)  "
 echo "========================================================"
 sleep 1
@@ -20,13 +20,14 @@ fi
 echo "  ✓ Service disabled from boot"
 
 # [2/6] IPTables Rules Cleanup
+# Handles both SOCKS mode (port 1337) and HTTP mode (port 1337 + 1338)
 echo -e "\n[2/6] Cleaning IPTables rules..."
 iptables -t nat -D PREROUTING -p tcp -i br-lan -j REDSOCKS 2>/dev/null
 iptables -t nat -F REDSOCKS 2>/dev/null
 iptables -t nat -X REDSOCKS 2>/dev/null
 echo "  ✓ REDSOCKS chain removed"
 echo "  ✓ PREROUTING rule removed"
-echo "  ✓ NAT rules cleaned"
+echo "  ✓ NAT rules cleaned (SOCKS + HTTP/HTTPS mode)"
 
 # [3/6] Config & Init Files Remove
 echo -e "\n[3/6] Removing config and init files..."
@@ -126,7 +127,7 @@ if [ "$FAIL" -eq 0 ]; then
     echo ""
     echo "========================================================"
     echo "    ✅ CLEANUP 100% COMPLETE!                            "
-    echo "    BDIX BYPASS v2.0 REMOVED SUCCESSFULLY               "
+    echo "    BDIX BYPASS v2.1 REMOVED SUCCESSFULLY               "
     echo "    FEEDBACK: @crazy_boy_jahid                          "
     echo "========================================================"
 else
